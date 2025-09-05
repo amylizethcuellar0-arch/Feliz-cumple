@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>¡Feliz cumpleaños, Luis!</title>
+  <style>
+    :root{
+      --bg:#fff0f5;         /* rosa MUY claro */
+      --ink:#3a2a2a;        /* tinta suave */
+      --accent:#d63384;     /* rosa acento */
+      --card:#ffffff;       /* tarjeta */
+      --edge:#00000014;     /* borde sutil */
+      --btn:#ffd166;        /* botón miel */
+      --btnInk:#271400;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    body{
+      background: var(--bg);
+      font-family: "Palatino","Georgia","Times New Roman",serif; /* cuerpo tipo carta */
+      color: var(--ink);
+      display:flex; align-items:center; justify-content:center;
+      padding: 20px; overflow:hidden;
+    }
+    .wrap{position:relative; z-index:2; width:min(760px, 92vw)}
+    .card{
+      background: var(--card);
+      border: 1px solid var(--edge);
+      border-radius: 18px;
+      padding: clamp(20px, 4.5vw, 32px);
+      box-shadow: 0 14px 40px rgba(0,0,0,.10);
+      line-height: 1.65;
+      position: relative;
+      z-index: 2;
+    }
+    h1{
+      margin:0 0 .4rem 0;
+      font-size: clamp(2.2rem, 7vw, 3rem);
+      text-align:center;
+      color: var(--accent);
+      letter-spacing:.3px;
+      font-family: "Snell Roundhand","Brush Script MT","Segoe Script","Lucida Handwriting",cursive;
+      font-weight: 600;
+    }
+    .msg{
+      margin:.25rem 0 1rem 0;
+      font-size: clamp(1.05rem, 3.8vw, 1.18rem);
+      text-align:center;
+    }
+    .divider{
+      height:1px; background: linear-gradient(90deg, #0000, #0003, #0000);
+      margin: .8rem 0 1rem 0; opacity:.25;
+    }
+    .cite{
+      font-style: italic; text-align:center; margin:.25rem 0 .75rem 0; opacity:.9;
+      font-size: clamp(.95rem, 3.4vw, 1.05rem);
+    }
+    blockquote{
+      margin:.2rem auto 1rem auto; padding:.6rem 1rem;
+      border-left:4px solid var(--accent);
+      background:#ffebf3b3; border-radius:10px;
+      font-size: clamp(1rem, 3.6vw, 1.12rem);
+    }
+    .firm{
+      margin-top:.6rem; text-align:right; font-weight:600; color:var(--accent);
+      font-size: clamp(1rem, 3.6vw, 1.12rem);
+      font-family: "Snell Roundhand","Brush Script MT","Segoe Script","Lucida Handwriting",cursive;
+    }
+    .actions{ display:flex; justify-content:center; gap:.8rem; margin-top:1rem; flex-wrap:wrap; }
+    button{
+      border:0; border-radius:12px; padding:.9rem 1.2rem; font-weight:700;
+      background:var(--btn); color:var(--btnInk); cursor:pointer;
+      transition: transform .05s ease, opacity .2s;
+    }
+    button:active{ transform: translateY(1px) scale(.99); }
+    button:focus-visible{ outline: 2px solid var(--accent); outline-offset: 3px; }
+
+    canvas#confetti{ position: fixed; inset: 0; z-index: 1; pointer-events:none; }
+  </style>
+</head>
+<body>
+  <canvas id="confetti"></canvas>
+
+  <div class="wrap">
+    <div class="card">
+      <h1>¡Feliz cumpleaños Luis!!</h1>
+
+      <p class="msg">
+        Te amo con todo mi corazón, ten un día muy lindo, lleno de amor y alegrías,
+        te deseo mis mejores deseos siempre, recuerda que te quiero siempre.
+      </p>
+
+      <div class="divider"></div>
+
+      <p class="cite"><strong>Crimen y castigo</strong> (Parte VI, Epílogo)</p>
+      <blockquote>
+        “Se miraron y comprendieron todo sin necesidad de palabras.<br>
+        Era el amor, el amor que lo renueva todo,<br>
+        el amor que da la vida,<br>
+        que resucita al hombre desde la muerte<br>
+        y que hace olvidar lo que fue,<br>
+        iluminando el sufrimiento con esperanza.”
+      </blockquote>
+
+      <p class="firm">Con amor: lis 💓</p>
+
+      <div class="actions">
+        <button id="again">Repetir confeti</button>
+        <button id="share">Compartir</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Confeti elegante (rosas y dorados)
+    const canvas = document.getElementById('confetti');
+    const ctx = canvas.getContext('2d');
+    const DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    let W, H, pieces = [], running = false, rafId;
+
+    const COLORS = ['#ff99c8','#ffc2e2','#ffd166','#ff6b6b','#d63384','#f7cad0'];
+
+    function resize(){
+      W = canvas.width  = Math.floor(innerWidth * DPR);
+      H = canvas.height = Math.floor(innerHeight * DPR);
+      canvas.style.width = innerWidth + 'px';
+      canvas.style.height = innerHeight + 'px';
+    }
+    addEventListener('resize', resize); resize();
+
+    class Piece {
+      constructor(fromTop){ this.reset(fromTop); }
+      reset(fromTop = false){
+        this.x = Math.random() * W;
+        this.y = fromTop ? -Math.random()*H*0.2 : Math.random()*H;
+        this.size = (Math.random()*7 + 4) * DPR;
+        this.vx = (Math.random() - .5) * 0.7 * DPR;
+        this.vy = (Math.random()*1.8 + 1.8) * DPR;
+        this.spin = (Math.random()*0.18 - 0.09);
+        this.angle = Math.random()*Math.PI*2;
+        this.alpha = 0.95;
+        this.color = COLORS[(Math.random()*COLORS.length)|0];
+        this.shape = Math.random() < .6 ? 'rect' : 'circle';
+      }
+      step(){
+        this.x += this.vx + Math.sin((this.y+this.size)*0.004)*0.6*DPR;
+        this.y += this.vy; this.angle += this.spin; this.alpha -= 0.0018;
+        if(this.y > H + 40*DPR || this.alpha <= 0){ this.reset(true); }
+      }
+      draw(){
+        ctx.globalAlpha = Math.max(0, this.alpha); ctx.fillStyle = this.color;
+        ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle);
+        if(this.shape === 'rect'){ ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size*0.7); }
+        else { ctx.beginPath(); ctx.arc(0,0,this.size/2,0,Math.PI*2); ctx.fill(); }
+        ctx.restore(); ctx.globalAlpha = 1;
+      }
+    }
+
+    function startConfetti(count=240, seconds=7){
+      for(let i=0;i<count;i++) pieces.push(new Piece(true));
+      if(!running){
+        running = true;
+        const end = performance.now() + seconds*1000;
+        (function loop(){
+          rafId = requestAnimationFrame(loop);
+          ctx.clearRect(0,0,W,H);
+          for(const p of pieces){ p.step(); p.draw(); }
+          if(performance.now() > end && pieces.length){
+            pieces.length = Math.max(0, pieces.length - 12);
+          }
+          if(performance.now() > end && pieces.length === 0){
+            cancelAnimationFrame(rafId); running = false;
+          }
+        })();
+      }
+    }
+
+    // Auto confeti al abrir
+    startConfetti();
+    setTimeout(()=> startConfetti(160, 5), 3000);
+
+    // Botones
+    document.getElementById('again').addEventListener('click', ()=> startConfetti(260, 7));
+    document.getElementById('share').addEventListener('click', async ()=>{
+      const text = "¡Feliz cumpleaños Luis!! 🎉\n\nTe amo con todo mi corazón, ten un día muy lindo, lleno de amor y alegrías, te deseo mis mejores deseos siempre, recuerda que te quiero siempre.\n\nCrimen y castigo (Parte VI, Epílogo)\n“Se miraron y comprendieron todo sin necesidad de palabras. Era el amor, el amor que lo renueva todo, el amor que da la vida, que resucita al hombre desde la muerte y que hace olvidar lo que fue, iluminando el sufrimiento con esperanza.”\n\nCon amor: lis 💓";
+      if(navigator.share){
+        try{ await navigator.share({title:"Feliz cumple, Luis", text}); }
+        catch(e){ console.log("Cancelado", e); }
+      } else {
+        try {
+          await navigator.clipboard.writeText(text);
+          alert("Mensaje copiado al portapapeles 💖");
+        } catch {
+          alert("No se pudo compartir automáticamente");
+        }
+      }
+    });
+  </script>
+</body>
+</html>
