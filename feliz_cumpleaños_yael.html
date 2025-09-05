@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Feliz cumple, Yael ✨</title>
+<style>
+  :root{
+    --bg1:#0f0c29; --bg2:#302b63; --bg3:#24243e;
+    --card:#ffffff0f; --stroke:#ffffff26; --pink:#ffb3d9; /* rosa claro */
+    --txt:#fff;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{
+    display:grid; place-items:center; overflow:hidden;
+    background: radial-gradient(1200px 800px at 20% 10%, #1d1847, transparent),
+                linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));
+    color:var(--txt); font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Arial;
+  }
+  .wrap{position:relative; z-index:2; width:min(780px, 92vw)}
+  .card{
+    background: var(--card);
+    border: 1px solid var(--stroke);
+    border-radius: 20px;
+    padding: clamp(18px, 4vw, 28px);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 20px 60px rgba(0,0,0,.35);
+  }
+  h1{
+    margin:0 0 .4rem 0;
+    font-size: clamp(1.8rem, 5vw, 3.2rem);
+    line-height:1.1; text-align:center;
+  }
+  .sub{
+    text-align:center; opacity:.9; margin:0 0 1.2rem 0;
+    font-size: clamp(.95rem, 2.6vw, 1.05rem);
+  }
+  .letter{
+    color: var(--txt);
+    background: linear-gradient(180deg, #fff, #fff0);
+    border: 1px solid #ffffff30;
+    border-radius: 16px;
+    padding: clamp(16px, 3.6vw, 20px);
+    line-height:1.6;
+    font-size: clamp(1rem, 2.8vw, 1.1rem);
+    position:relative;
+  }
+  .letter .pink{
+    color: var(--pink);
+    font-weight: 800;
+    letter-spacing: .3px;
+  }
+  .sig{ margin-top:.8rem; opacity:.9; }
+  .heartline{
+    text-align:center; margin:.6rem 0 0 0; color:var(--pink);
+    filter: drop-shadow(0 0 6px rgba(255,179,217,.35));
+  }
+  .row{ display:flex; gap:.6rem; justify-content:center; margin-top:1rem; flex-wrap:wrap; }
+  button{
+    padding:.9rem 1.15rem; border-radius:12px; border:0; cursor:pointer; font-weight:700;
+    background:#ffd166; color:#271400; transition: transform .05s ease, opacity .2s;
+  }
+  button:active{ transform: translateY(1px) scale(.99); }
+
+  canvas#confetti{ position:fixed; inset:0; z-index:1; pointer-events:none; }
+  .balloon{ position:fixed; bottom:-10vh; font-size: clamp(22px,3.5vw,40px); opacity:.85; z-index:0; }
+  @keyframes floatUp{
+    0%{ transform: translateY(0) translateX(0) rotate(0deg); opacity:0 }
+    12%{ opacity:.95 }
+    50%{ transform: translateY(-55vh) translateX(16px) rotate(6deg) }
+    100%{ transform: translateY(-120vh) translateX(-16px) rotate(-6deg); opacity:.2 }
+  }
+</style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+<div id="balloons"></div>
+
+<div class="wrap">
+  <div class="card">
+    <h1>🎉 ¡Feliz cumpleaños, Yael! 🎉</h1>
+    <p class="sub">Abre esto, respira profundo y deja que llueva confeti. 💖</p>
+
+    <div class="letter">
+      <p class="pink">Feliz cumpleaños yael</p>
+      <p>te amo con todo mi corazón te deseo lo mejor siempre se feliz y disfruta siempre tu día,</p>
+      <p class="sig">con todo cariño <span class="pink">lis</span></p>
+      <p class="heartline">💖💖💖</p>
+    </div>
+
+    <div class="row">
+      <button id="again">Repetir confeti</button>
+      <button id="share">Compartir</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ------- Confeti -------
+  const canvas = document.getElementById('confetti');
+  const ctx = canvas.getContext('2d');
+  const DPR = Math.max(1, Math.min(2, devicePixelRatio || 1));
+  const colors = ['#ff6b6b','#ffd166','#06d6a0','#4cc9f0','#b5179e','#ffe66d','#7bf1a8','#f72585','#ffb3d9'];
+  let W, H, particles = [], running = false, rafId;
+
+  function resize(){
+    W = canvas.width = Math.floor(innerWidth * DPR);
+    H = canvas.height = Math.floor(innerHeight * DPR);
+    canvas.style.width = innerWidth + 'px';
+    canvas.style.height = innerHeight + 'px';
+  }
+  addEventListener('resize', resize); resize();
+
+  class Particle{
+    constructor(){ this.reset(true); }
+    reset(fromTop=false){
+      this.x = Math.random() * W;
+      this.y = fromTop ? - (Math.random()*H*0.2) : Math.random()*H;
+      this.size = (Math.random()*6 + 4) * DPR;
+      this.color = colors[(Math.random()*colors.length)|0];
+      this.vx = (Math.random()-.5) * 0.8 * DPR;
+      this.vy = (Math.random()*2 + 2) * DPR;
+      this.spin = (Math.random()*0.22 - 0.11);
+      this.angle = Math.random()*Math.PI*2;
+      this.alpha = 1;
+      this.shape = Math.random() < .5 ? 'rect' : 'circle';
+    }
+    step(){
+      this.x += this.vx + Math.sin((this.y+this.size)*0.004)*0.7*DPR;
+      this.y += this.vy;
+      this.angle += this.spin;
+      this.alpha -= 0.003;
+      if(this.y > H+40*DPR || this.alpha <= 0) this.reset(true);
+    }
+    draw(){
+      ctx.globalAlpha = Math.max(0, this.alpha);
+      ctx.fillStyle = this.color;
+      ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle);
+      if(this.shape === 'rect'){ ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size*0.7); }
+      else { ctx.beginPath(); ctx.arc(0,0,this.size/2,0,Math.PI*2); ctx.fill(); }
+      ctx.restore(); ctx.globalAlpha = 1;
+    }
+  }
+
+  function burst(count=280, seconds=6){
+    for(let i=0;i<count;i++) particles.push(new Particle());
+    if(!running){
+      running = true;
+      const tEnd = performance.now() + seconds*1000;
+      (function loop(){
+        rafId = requestAnimationFrame(loop);
+        ctx.clearRect(0,0,W,H);
+        for(const p of particles){ p.step(); p.draw(); }
+        if(performance.now() > tEnd && particles.length > 0){
+          particles.length = Math.max(0, particles.length - 14);
+        }
+        if(performance.now() > tEnd && particles.length === 0){
+          cancelAnimationFrame(rafId); running = false;
+        }
+      })();
+    }
+  }
+
+  // ------- Globos -------
+  const balloons = document.getElementById('balloons');
+  function spawnBalloons(n=14){
+    for(let i=0;i<n;i++){
+      const s = document.createElement('span');
+      s.className = 'balloon';
+      s.textContent = Math.random()<.6 ? '🎈' : '🎊';
+      s.style.left = (Math.random()*96+2) + 'vw';
+      const d = (Math.random()*8 + 10).toFixed(2) + 's';
+      const delay = (Math.random()*8).toFixed(2) + 's';
+      s.style.animation = `floatUp ${d} linear ${delay} infinite`;
+      balloons.appendChild(s);
+    }
+  }
+  spawnBalloons();
+
+  // ------- Botones -------
+  document.getElementById('again').onclick = ()=> burst();
+  document.getElementById('share').onclick = async ()=>{
+    const text = "Feliz cumpleaños yael ❤️ Te amo con todo mi corazón. Te deseo lo mejor siempre: sé feliz y disfruta siempre tu día. Con todo cariño, Lis.";
+    if(navigator.share){
+      try { await navigator.share({title:"Feliz cumple, Yael", text}); } catch {}
+    } else {
+      navigator.clipboard?.writeText?.(text);
+      alert("Mensaje copiado. ¡Pégalo donde quieras! 💖");
+    }
+  };
+
+  // Auto confeti al abrir
+  burst();
+</script>
+</body>
+</html>
